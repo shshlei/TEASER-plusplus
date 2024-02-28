@@ -13,11 +13,7 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 
 # Options
-option(BUILD_TESTS "Build tests" ON)
 option(BUILD_TEASER_FPFH "Build TEASER++ wrappers for PCL FPFH estimation." OFF)
-option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
-option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
-option(BUILD_DOC "Build documentation" ON)
 option(BUILD_WITH_MARCH_NATIVE "Build with flag march=native" OFF)
 option(ENABLE_MKL "Try to use Eigen with MKL" OFF)
 option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messages" ON)
@@ -25,11 +21,6 @@ option(ENABLE_DIAGNOSTIC_PRINT "Enable printing of diagnostic messages" ON)
 if (ENABLE_DIAGNOSTIC_PRINT)
     message(STATUS "Enable printing of diagnostic messages.")
     add_definitions(-DTEASER_DIAG_PRINT)
-endif ()
-
-# Cache Variables
-if (NOT TEASERPP_PYTHON_VERSION)
-    set(TEASERPP_PYTHON_VERSION "" CACHE STRING "Python version to use for TEASER++ bindings.")
 endif ()
 
 # Find dependencies
@@ -73,16 +64,6 @@ if (BUILD_TEASER_FPFH)
     endif()
 endif ()
 
-# googletest
-configure_file(cmake/GoogleTest.CMakeLists.txt.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download")
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
-        "${CMAKE_BINARY_DIR}/googletest-build" EXCLUDE_FROM_ALL)
-
 # pmc (Parallel Maximum Clique)
 configure_file(cmake/pmc.CMakeLists.txt.in pmc-download/CMakeLists.txt)
 execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
@@ -114,36 +95,6 @@ set(SPECTRA_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/spectra-src/include")
 # Building Targets
 set(TEASERPP_ROOT ${CMAKE_CURRENT_LIST_DIR})
 add_subdirectory(teaser)
-
-if (BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(test)
-endif ()
-
-if (BUILD_DOC)
-    add_subdirectory(doc EXCLUDE_FROM_ALL)
-endif ()
-
-if (BUILD_MATLAB_BINDINGS)
-    message(STATUS "Will build MATLAB bindings.")
-    add_subdirectory(matlab)
-endif ()
-
-if (BUILD_PYTHON_BINDINGS)
-    set(PYBIND11_PYTHON_VERSION ${TEASERPP_PYTHON_VERSION})
-
-    # download the pybind11 repo
-    configure_file(cmake/pybind11.CMakeLists.txt.in pybind11-download/CMakeLists.txt)
-    execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pybind11-download")
-    execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/pybind11-download")
-    add_subdirectory("${CMAKE_BINARY_DIR}/pybind11-src"
-            "${CMAKE_BINARY_DIR}/pybind11-build")
-
-    message(STATUS "TEASER++ Python binding will be built.")
-    add_subdirectory(python)
-endif ()
 
 # export targets
 export(TARGETS ${TEASERPP_EXPORTED_TARGETS} FILE teaserpp-exports.cmake)

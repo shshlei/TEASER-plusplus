@@ -8,14 +8,16 @@
 
 #pragma once
 
+#include "fpfh.h"
+#include "teaser/geometry.h"
+
 #include <flann/flann.hpp>
 
-#include "teaser/geometry.h"
-#include "fpfh.h"
+namespace teaser
+{
 
-namespace teaser {
-
-class Matcher {
+class Matcher
+{
 public:
   typedef std::vector<Eigen::VectorXf> Feature;
   typedef flann::Index<flann::L2<float>> KDTree;
@@ -37,17 +39,18 @@ public:
    * @return
    */
   std::vector<std::pair<int, int>>
-  calculateCorrespondences(teaser::PointCloud& source_points, teaser::PointCloud& target_points,
-                           teaser::FPFHCloud& source_features, teaser::FPFHCloud& target_features,
-                           bool use_absolute_scale = true, bool use_crosscheck = true,
-                           bool use_tuple_test = true, float tuple_scale = 0);
+  calculateCorrespondences(teaser::PointCloud & source_points, teaser::PointCloud & target_points,
+    teaser::FPFHCloud & source_features, teaser::FPFHCloud & target_features,
+    bool use_absolute_scale = true, bool use_crosscheck = true,
+    bool use_tuple_test = true, float tuple_scale = 0);
 
 private:
-  template <typename T> void buildKDTree(const std::vector<T>& data, KDTree* tree);
+  template <typename T>
+  void buildKDTree(const std::vector<T> & data, KDTree * tree);
 
   template <typename T>
-  void searchKDTree(KDTree* tree, const T& input, std::vector<int>& indices,
-                    std::vector<float>& dists, int nn);
+  void searchKDTree(KDTree * tree, const T & input, std::vector<int> & indices,
+    std::vector<float> & dists, int nn);
 
   void advancedMatching(bool use_crosscheck, bool use_tuple_test, float tuple_scale);
 
@@ -56,8 +59,8 @@ private:
   std::vector<std::pair<int, int>> corres_;
   std::vector<teaser::PointCloud> pointcloud_;
   std::vector<Feature> features_;
-  std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f> > means_; // for normalization
+  std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> means_;  // for normalization
   float global_scale_;
 };
 
-} // namespace teaser
+}  // namespace teaser

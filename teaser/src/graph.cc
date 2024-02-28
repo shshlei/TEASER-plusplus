@@ -7,10 +7,11 @@
  */
 
 #include "teaser/graph.h"
+
 #include "pmc/pmc.h"
 
-vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
-
+vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph)
+{
   // Handle deprecated field
   if (!params_.solve_exactly) {
     params_.solver_mode = CLIQUE_SOLVER_MODE::PMC_HEU;
@@ -22,8 +23,8 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   vertices.push_back(edges.size());
 
   const auto all_vertices = graph.getVertices();
-  for (const auto& i : all_vertices) {
-    const auto& c_edges = graph.getEdges(i);
+  for (const auto & i : all_vertices) {
+    const auto & c_edges = graph.getEdges(i);
     edges.insert(edges.end(), c_edges.begin(), c_edges.end());
     vertices.push_back(edges.size());
   }
@@ -74,7 +75,7 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
     for (int i = 1; i < k_cores->size(); ++i) {
       // Note: k_core has size equals to num vertices + 1
       if ((*k_cores)[i] >= max_core) {
-        C.push_back(i-1);
+        C.push_back(i - 1);
       }
     }
     return C;
@@ -85,7 +86,7 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
   }
 
   // lower-bound of max clique
-  if (in.lb == 0 && in.heu_strat != "0") { // skip if given as input
+  if (in.lb == 0 && in.heu_strat != "0") {  // skip if given as input
     pmc::pmc_heu maxclique(G, in);
     in.lb = maxclique.search(G, C);
   }
@@ -115,7 +116,8 @@ vector<int> teaser::MaxCliqueSolver::findMaxClique(teaser::Graph graph) {
       G.create_adj();
       pmc::pmcx_maxclique finder(G, in);
       finder.search_dense(G, C);
-    } else {
+    }
+    else {
       pmc::pmcx_maxclique finder(G, in);
       finder.search(G, C);
     }

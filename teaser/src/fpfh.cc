@@ -8,18 +8,18 @@
 
 #include "teaser/fpfh.h"
 
-#include <pcl/features/normal_3d.h>
-
 #include "teaser/utils.h"
 
-teaser::FPFHCloudPtr teaser::FPFHEstimation::computeFPFHFeatures(
-    const teaser::PointCloud& input_cloud, double normal_search_radius, double fpfh_search_radius) {
+#include <pcl/features/normal_3d.h>
 
+teaser::FPFHCloudPtr teaser::FPFHEstimation::computeFPFHFeatures(
+  const teaser::PointCloud & input_cloud, double normal_search_radius, double fpfh_search_radius)
+{
   // Intermediate variables
   pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
   teaser::FPFHCloudPtr descriptors(new pcl::PointCloud<pcl::FPFHSignature33>());
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  for (auto& i : input_cloud) {
+  for (auto & i : input_cloud) {
     pcl::PointXYZ p(i.x, i.y, i.z);
     pcl_input_cloud->push_back(p);
   }
@@ -42,20 +42,27 @@ teaser::FPFHCloudPtr teaser::FPFHEstimation::computeFPFHFeatures(
   return descriptors;
 }
 
-void teaser::FPFHEstimation::setInputCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud) {
+void teaser::FPFHEstimation::setInputCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud)
+{
   fpfh_estimation_->setInputCloud(input_cloud);
 }
 
-void teaser::FPFHEstimation::setInputNormals(pcl::PointCloud<pcl::Normal>::Ptr input_normals) {
+void teaser::FPFHEstimation::setInputNormals(pcl::PointCloud<pcl::Normal>::Ptr input_normals)
+{
   fpfh_estimation_->setInputNormals(input_normals);
 }
 
 void teaser::FPFHEstimation::setSearchMethod(
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr search_method) {
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr search_method)
+{
   fpfh_estimation_->setSearchMethod(search_method);
 }
 
-void teaser::FPFHEstimation::compute(pcl::PointCloud<pcl::FPFHSignature33>& output_cloud) {
+void teaser::FPFHEstimation::compute(pcl::PointCloud<pcl::FPFHSignature33> & output_cloud)
+{
   fpfh_estimation_->compute(output_cloud);
 }
-void teaser::FPFHEstimation::setRadiusSearch(double r) { fpfh_estimation_->setRadiusSearch(r); }
+void teaser::FPFHEstimation::setRadiusSearch(double r)
+{
+  fpfh_estimation_->setRadiusSearch(r);
+}

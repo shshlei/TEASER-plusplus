@@ -12,11 +12,13 @@
 #include <Eigen/Geometry>
 #include <Eigen/SparseCore>
 
-namespace teaser {
+namespace teaser
+{
 
 using SparseMatrix = Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t>;
 
-struct CertificationResult {
+struct CertificationResult
+{
   bool is_optimal = false;
   double best_suboptimality = -1;
   std::vector<double> suboptimality_traj;
@@ -25,7 +27,8 @@ struct CertificationResult {
 /**
  * Abstract virtual class representing certification of registration results
  */
-class AbstractRotationCertifier {
+class AbstractRotationCertifier
+{
 public:
   virtual ~AbstractRotationCertifier() {}
 
@@ -37,10 +40,10 @@ public:
    * @param theta [in] a binary vector indicating inliers vs. outliers
    * @return  relative sub-optimality gap
    */
-  virtual CertificationResult certify(const Eigen::Matrix3d& rotation_solution,
-                                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                                      const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) = 0;
+  virtual CertificationResult certify(const Eigen::Matrix3d & rotation_solution,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+    const Eigen::Matrix<bool, 1, Eigen::Dynamic> & theta) = 0;
 };
 
 /**
@@ -50,24 +53,26 @@ public:
  * [1] H. Yang, J. Shi, and L. Carlone, “TEASER: Fast and Certifiable Point Cloud Registration,”
  * arXiv:2001.07715 [cs, math], Jan. 2020.
  */
-class DRSCertifier : public AbstractRotationCertifier {
+class DRSCertifier : public AbstractRotationCertifier
+{
 public:
-
   /**
    * Solver for eigendecomposition solver / spectral decomposition.
    *
    * @brief For most cases, the default solvers in Eigen should be used.
    * For extremely large matrices, it may make sense to use Spectra instead.
    */
-  enum class EIG_SOLVER_TYPE {
-    EIGEN = 0, ///< Use solvers in the Eigen library
-    SPECTRA = 1, ///< Use solvers in the Spectra library
+  enum class EIG_SOLVER_TYPE
+  {
+    EIGEN = 0,    ///< Use solvers in the Eigen library
+    SPECTRA = 1,  ///< Use solvers in the Spectra library
   };
 
   /**
    * Parameter struct for DRSCertifier
    */
-  struct Params {
+  struct Params
+  {
     /**
      * Noise bound for the vectors used for certification
      */
@@ -107,14 +112,16 @@ public:
    * Constructor for DRSCertifier that takes in a parameter struct
    * @param params [in] struct holding all parameters
    */
-  DRSCertifier(const Params& params) : params_(params) {};
+  DRSCertifier(const Params & params)
+  : params_(params){};
 
   /**
    * Constructor for DRSCertifier
    * @param noise_bound [in] bound on the noise
    * @param cbar2 [in] maximal allowed residual^2 to noise bound^2 ratio, usually set to 1
    */
-  DRSCertifier(double noise_bound, double cbar2) {
+  DRSCertifier(double noise_bound, double cbar2)
+  {
     params_.noise_bound = noise_bound;
     params_.cbar2 = cbar2;
   };
@@ -128,10 +135,10 @@ public:
    * @param theta [in] binary (1 vs. 0) vector indicating inliers vs. outliers
    * @return  relative sub-optimality gap
    */
-  CertificationResult certify(const Eigen::Matrix3d& R_solution,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                              const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) override;
+  CertificationResult certify(const Eigen::Matrix3d & R_solution,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+    const Eigen::Matrix<bool, 1, Eigen::Dynamic> & theta) override;
 
   /**
    * Main certification function
@@ -142,10 +149,10 @@ public:
    * @param theta [in] binary (1 vs. -1) vector indicating inliers vs. outliers
    * @return  relative sub-optimality gap
    */
-  CertificationResult certify(const Eigen::Matrix3d& R_solution,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                              const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta);
+  CertificationResult certify(const Eigen::Matrix3d & R_solution,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+    const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta);
 
   /**
    * Compute sub-optimality gap
@@ -154,14 +161,14 @@ public:
    * @param N
    * @return
    */
-  double computeSubOptimalityGap(const Eigen::MatrixXd& M, double mu, int N);
+  double computeSubOptimalityGap(const Eigen::MatrixXd & M, double mu, int N);
 
   /**
    * Get the Omega_1 matrix given a quaternion
    * @param q an Eigen quaternion
    * @param omega1 4-by-4 omega_1 matrix
    */
-  Eigen::Matrix4d getOmega1(const Eigen::Quaterniond& q);
+  Eigen::Matrix4d getOmega1(const Eigen::Quaterniond & q);
 
   /**
    * Get a 4-by-4 block diagonal matrix with each block represents omega_1
@@ -169,17 +176,17 @@ public:
    * @param theta
    * @param D_omega
    */
-  void getBlockDiagOmega(int Npm, const Eigen::Quaterniond& q,
-                         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* D_omega);
+  void getBlockDiagOmega(int Npm, const Eigen::Quaterniond & q,
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> * D_omega);
 
   /**
    * Get Q cost matrix (see Proposition 10 in [1])
    * @param v1 vectors under rotation
    * @param v2 vectors after rotation
    */
-  void getQCost(const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
-                const Eigen::Matrix<double, 3, Eigen::Dynamic>& v2,
-                Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q);
+  void getQCost(const Eigen::Matrix<double, 3, Eigen::Dynamic> & v1,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & v2,
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> * Q);
 
   /**
    * Given an arbitrary matrix W, project W to the correct dual structure
@@ -188,9 +195,9 @@ public:
     (3) W_dual must also satisfy complementary slackness (because M_init satisfies complementary
    slackness) This projection is optimal in the sense of minimum Frobenious norm
    */
-  void getOptimalDualProjection(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
-                                const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-                                const SparseMatrix& A_inv, Eigen::MatrixXd* W_dual);
+  void getOptimalDualProjection(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> & W,
+    const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta_prepended,
+    const SparseMatrix & A_inv, Eigen::MatrixXd * W_dual);
 
   /**
    * Generate an initial guess (see Appendix U of [1]).
@@ -205,11 +212,11 @@ public:
    * @param dst [in]
    * @param lambda_guess [out]
    */
-  void getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
-                      const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
-                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                      const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                      SparseMatrix* lambda_guess);
+  void getLambdaGuess(const Eigen::Matrix<double, 3, 3> & R,
+    const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+    const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+    SparseMatrix * lambda_guess);
 
   /**
    * Calculate the inverse of the linear projection matrix A mentioned in Theorem 35 of our TEASER
@@ -219,8 +226,8 @@ public:
    * prepended
    * @param A_inv [out] inverse of A
    */
-  void getLinearProjection(const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended,
-                           SparseMatrix* A_inv);
+  void getLinearProjection(const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta_prepended,
+    SparseMatrix * A_inv);
 
 private:
   /**
@@ -230,11 +237,11 @@ private:
    * @param theta [in]
    * @param output [out]
    */
-  void getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
-                      const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
-                      Eigen::Vector4d* output);
+  void getBlockRowSum(const Eigen::MatrixXd & A, const int & row,
+    const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta,
+    Eigen::Vector4d * output);
 
   Params params_;
 };
 
-} // namespace teaser
+}  // namespace teaser

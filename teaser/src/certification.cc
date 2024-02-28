@@ -6,30 +6,33 @@
  * See LICENSE for the license information
  */
 
-#include <limits>
-#include <fstream>
-#include <chrono>
-#include <algorithm>
-
-#include <teaser/macros.h>
-#include <Spectra/SymEigsSolver.h>
-#include <Spectra/GenEigsSolver.h>
-#include <Spectra/SymEigsShiftSolver.h>
-
 #include "teaser/certification.h"
+
 #include "teaser/linalg.h"
 
+#include <Spectra/GenEigsSolver.h>
+#include <Spectra/SymEigsShiftSolver.h>
+#include <Spectra/SymEigsSolver.h>
+#include <teaser/macros.h>
+
+#include <algorithm>
+#include <chrono>
+#include <fstream>
+#include <limits>
+
 teaser::CertificationResult
-teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                              const Eigen::Matrix<bool, 1, Eigen::Dynamic>& theta) {
+teaser::DRSCertifier::certify(const Eigen::Matrix3d & R_solution,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+  const Eigen::Matrix<bool, 1, Eigen::Dynamic> & theta)
+{
   // convert theta to a double Eigen matrix
   Eigen::Matrix<double, 1, Eigen::Dynamic> theta_double(1, theta.cols());
   for (size_t i = 0; i < theta.cols(); ++i) {
     if (theta(i)) {
       theta_double(i) = 1;
-    } else {
+    }
+    else {
       theta_double(i) = -1;
     }
   }
@@ -37,10 +40,11 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 }
 
 teaser::CertificationResult
-teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                              const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta) {
+teaser::DRSCertifier::certify(const Eigen::Matrix3d & R_solution,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+  const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta)
+{
   int N = src.cols();
   int Npm = 4 + 4 * N;
 
@@ -72,7 +76,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   // this would have been the rank-1 decomposition of Z if Z were the globally
   // optimal solution of the QUASAR SDP
   Eigen::VectorXd x =
-      teaser::vectorKron<double, Eigen::Dynamic, Eigen::Dynamic>(theta_prepended, q_solution_vec);
+    teaser::vectorKron<double, Eigen::Dynamic, Eigen::Dynamic>(theta_prepended, q_solution_vec);
 
   // build the "rotation matrix" D_omega
   Eigen::MatrixXd D_omega;
@@ -97,7 +101,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
 
   // this initial guess lives in the affine subspace
   // use 2 separate steps to limit slow evaluation on only the few non-zeros in the sparse matrix
-#if EIGEN_VERSION_AT_LEAST(3,3,0)
+#if EIGEN_VERSION_AT_LEAST(3, 3, 0)
   Eigen::SparseMatrix<double> M_init = Q_bar - mu * J_bar - lambda_bar_init;
 #else
   // fix for this bug in Eigen 3.2: https://eigen.tuxfamily.org/bz/show_bug.cgi?id=632
@@ -135,7 +139,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     TEASER_DEBUG_INFO_MSG("PSD time: " << TEASER_DEBUG_GET_TIMING(PSD));
 
     // projection to affine space
-#if EIGEN_VERSION_AT_LEAST(3,3,0)
+#if EIGEN_VERSION_AT_LEAST(3, 3, 0)
     temp_W = 2 * M_PSD - M - M_init;
 #else
     // fix for this bug in Eigen 3.2: https://eigen.tuxfamily.org/bz/show_bug.cgi?id=632
@@ -147,7 +151,7 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
     getOptimalDualProjection(temp_W, theta_prepended, inverse_map, &W_dual);
     TEASER_DEBUG_STOP_TIMING(DualProjection);
     TEASER_DEBUG_INFO_MSG("Dual Projection time: " << TEASER_DEBUG_GET_TIMING(DualProjection));
-#if EIGEN_VERSION_AT_LEAST(3,3,0)
+#if EIGEN_VERSION_AT_LEAST(3, 3, 0)
     M_affine = M_init + W_dual;
 #else
     // fix for this bug in Eigen 3.2: https://eigen.tuxfamily.org/bz/show_bug.cgi?id=632
@@ -189,7 +193,8 @@ teaser::DRSCertifier::certify(const Eigen::Matrix3d& R_solution,
   return cert_result;
 }
 
-double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, double mu, int N) {
+double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd & M, double mu, int N)
+{
   Eigen::MatrixXd new_M = (M + M.transpose()) / 2;
 
   bool successful = false;
@@ -203,11 +208,12 @@ double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, d
       min_eig = eig_vals.minCoeff();
       successful = true;
     }
-  } else {
+  }
+  else {
     // Spectra
     Spectra::DenseSymMatProd<double> op(new_M);
     Spectra::SymEigsSolver<double, Spectra::SMALLEST_ALGE, Spectra::DenseSymMatProd<double>> eigs(
-        &op, 1, 30);
+      &op, 1, 30);
     eigs.init();
     int nconv = eigs.compute();
     if (eigs.info() == Spectra::SUCCESSFUL) {
@@ -219,7 +225,7 @@ double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, d
 
   if (!successful) {
     TEASER_DEBUG_ERROR_MSG(
-        "Failed to find the minimal eigenvalue for suboptimality gap calculaiton.");
+      "Failed to find the minimal eigenvalue for suboptimality gap calculaiton.");
     return std::numeric_limits<double>::infinity();
   }
 
@@ -230,9 +236,10 @@ double teaser::DRSCertifier::computeSubOptimalityGap(const Eigen::MatrixXd& M, d
   return (-min_eig * (N + 1)) / mu;
 }
 
-void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
-                                    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v2,
-                                    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* Q) {
+void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynamic> & v1,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & v2,
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> * Q)
+{
   int N = v1.cols();
   int Npm = 4 + 4 * N;
   double noise_bound_scaled = params_.cbar2 * std::pow(params_.noise_bound, 2);
@@ -272,9 +279,9 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynami
     //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) - barc2 );
     double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() - noise_bound_scaled);
     Q1.block<4, 4>(0, start_idx) =
-        Q1.block<4, 4>(0, start_idx) - 0.5 * P_k + ck / 2 * Eigen::Matrix4d::Identity();
+      Q1.block<4, 4>(0, start_idx) - 0.5 * P_k + ck / 2 * Eigen::Matrix4d::Identity();
     Q1.block<4, 4>(start_idx, 0) =
-        Q1.block<4, 4>(start_idx, 0) - 0.5 * P_k + ck / 2 * Eigen::Matrix4d::Identity();
+      Q1.block<4, 4>(start_idx, 0) - 0.5 * P_k + ck / 2 * Eigen::Matrix4d::Identity();
   }
 
   // Q2 matrix
@@ -292,13 +299,14 @@ void teaser::DRSCertifier::getQCost(const Eigen::Matrix<double, 3, Eigen::Dynami
     //  ck = 0.5 * ( v1(:,k)'*v1(:,k)+v2(:,k)'*v2(:,k) + barc2 );
     double ck = 0.5 * (v1.col(k).squaredNorm() + v2.col(k).squaredNorm() + noise_bound_scaled);
     Q2.block<4, 4>(start_idx, start_idx) =
-        Q2.block<4, 4>(start_idx, start_idx) - P_k + ck * Eigen::Matrix4d::Identity();
+      Q2.block<4, 4>(start_idx, start_idx) - P_k + ck * Eigen::Matrix4d::Identity();
   }
 
   *Q = Q1 + Q2;
 }
 
-Eigen::Matrix4d teaser::DRSCertifier::getOmega1(const Eigen::Quaterniond& q) {
+Eigen::Matrix4d teaser::DRSCertifier::getOmega1(const Eigen::Quaterniond & q)
+{
   Eigen::Matrix4d omega1;
   // clang-format off
   omega1 << q.w(), -q.z(), q.y(), q.x(),
@@ -310,8 +318,9 @@ Eigen::Matrix4d teaser::DRSCertifier::getOmega1(const Eigen::Quaterniond& q) {
 }
 
 void teaser::DRSCertifier::getBlockDiagOmega(
-    int Npm, const Eigen::Quaterniond& q,
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>* D_omega) {
+  int Npm, const Eigen::Quaterniond & q,
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> * D_omega)
+{
   D_omega->resize(Npm, Npm);
   D_omega->setZero();
   for (size_t i = 0; i < Npm / 4; ++i) {
@@ -321,9 +330,10 @@ void teaser::DRSCertifier::getBlockDiagOmega(
 }
 
 void teaser::DRSCertifier::getOptimalDualProjection(
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& W,
-    const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended, const SparseMatrix& A_inv,
-    Eigen::MatrixXd* W_dual) {
+  const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> & W,
+  const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta_prepended, const SparseMatrix & A_inv,
+  Eigen::MatrixXd * W_dual)
+{
   // prepare some variables
   int Npm = W.rows();
   int N = Npm / 4 - 1;
@@ -442,20 +452,21 @@ void teaser::DRSCertifier::getOptimalDualProjection(
 
   // update diagonal blocks
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> temp_A((N + 1) * W_diag_mean.rows(),
-                                                               (N + 1) * W_diag_mean.cols());
+    (N + 1) * W_diag_mean.cols());
   temp_A.setZero();
   for (int i = 0; i < N + 1; i++) {
     temp_A.block(i * W_diag_mean.rows(), i * W_diag_mean.cols(), W_diag_mean.rows(),
-                 W_diag_mean.cols()) = W_diag_mean;
+      W_diag_mean.cols()) = W_diag_mean;
   }
   *W_dual -= temp_A;
 }
 
-void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
-                                          const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
-                                          const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                                          const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                                          SparseMatrix* lambda_guess) {
+void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3> & R,
+  const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+  SparseMatrix * lambda_guess)
+{
   int K = theta.cols();
   int Npm = 4 * K + 4;
 
@@ -485,15 +496,16 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
 
       // compute the top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
-          src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(xi) * Eigen::Matrix3d::Identity() +
-          0.5 * xi_hatmap * src_i_hatmap + 0.5 * xi * src.col(i).transpose() -
-          0.75 * xi.squaredNorm() * Eigen::Matrix3d::Identity() -
-          0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
+        src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(xi) * Eigen::Matrix3d::Identity() +
+        0.5 * xi_hatmap * src_i_hatmap + 0.5 * xi * src.col(i).transpose() -
+        0.75 * xi.squaredNorm() * Eigen::Matrix3d::Identity() -
+        0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
 
       // compute the vector part
       current_block.topRightCorner<3, 1>() = -1.5 * xi_hatmap * src.col(i);
       current_block.bottomLeftCorner<1, 3>() = (current_block.topRightCorner<3, 1>()).transpose();
-    } else {
+    }
+    else {
       // residual
       Eigen::Matrix<double, 3, 1> phi = R.transpose() * (dst.col(i) - R * src.col(i));
       Eigen::Matrix<double, 3, 3> phi_hatmap = teaser::hatmap(phi);
@@ -503,10 +515,10 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
 
       // compute E_ii, top-left 3-by-3 block
       current_block.topLeftCorner<3, 3>() =
-          src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(phi) * Eigen::Matrix3d::Identity() +
-          0.5 * phi_hatmap * src_i_hatmap + 0.5 * phi * src.col(i).transpose() -
-          0.25 * phi.squaredNorm() * Eigen::Matrix3d::Identity() -
-          0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
+        src_i_hatmap * src_i_hatmap - 0.5 * (src.col(i)).dot(phi) * Eigen::Matrix3d::Identity() +
+        0.5 * phi_hatmap * src_i_hatmap + 0.5 * phi * src.col(i).transpose() -
+        0.25 * phi.squaredNorm() * Eigen::Matrix3d::Identity() -
+        0.25 * noise_bound_scaled * Eigen::Matrix3d::Identity();
 
       // compute x_i
       current_block.topRightCorner<3, 1>() = -0.5 * phi_hatmap * src.col(i);
@@ -536,7 +548,8 @@ void teaser::DRSCertifier::getLambdaGuess(const Eigen::Matrix<double, 3, 3>& R,
 }
 
 void teaser::DRSCertifier::getLinearProjection(
-    const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta_prepended, SparseMatrix* A_inv) {
+  const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta_prepended, SparseMatrix * A_inv)
+{
   // number of off-diagonal entries in the inverse map
   int N0 = theta_prepended.cols() - 1;
 
@@ -597,14 +610,15 @@ void teaser::DRSCertifier::getLinearProjection(
             // flip to upper-triangular
             var_i_idx = mat2vec(p, i);
             entry_val = y * theta_prepended(j) * theta_prepended(p);
-          } else {
+          }
+          else {
             var_i_idx = mat2vec(i, p);
             entry_val = -y * theta_prepended(j) * theta_prepended(p);
           }
           temp_column.emplace_back(var_i_idx, var_j_idx, entry_val);
           if (var_i_idx == var_j_idx) {
             diag_inserted = true;
-            diag_idx = temp_column.size()-1;
+            diag_idx = temp_column.size() - 1;
           }
         }
       }
@@ -616,14 +630,15 @@ void teaser::DRSCertifier::getLinearProjection(
             // flip to upper-triangular
             var_i_idx = mat2vec(p, j);
             entry_val = -y * theta_prepended(i) * theta_prepended(p);
-          } else {
+          }
+          else {
             var_i_idx = mat2vec(j, p);
             entry_val = y * theta_prepended(i) * theta_prepended(p);
           }
           temp_column.emplace_back(var_i_idx, var_j_idx, entry_val);
           if (var_i_idx == var_j_idx) {
             diag_inserted = true;
-            diag_idx = temp_column.size()-1;
+            diag_idx = temp_column.size() - 1;
           }
         }
       }
@@ -631,16 +646,17 @@ void teaser::DRSCertifier::getLinearProjection(
       // insert diagonal entries if not already done so
       if (!diag_inserted) {
         temp_column.emplace_back(var_j_idx, var_j_idx, x);
-      } else {
+      }
+      else {
         double entry_val = temp_column[diag_idx].value() + x;
         temp_column[diag_idx] = {var_j_idx, var_j_idx, entry_val};
       }
 
       // sort by row index (ascending)
       std::sort(temp_column.begin(), temp_column.end(),
-                [](const Eigen::Triplet<double>& t1, const Eigen::Triplet<double>& t2) {
-                  return t1.row() < t2.row();
-                });
+        [](const Eigen::Triplet<double> & t1, const Eigen::Triplet<double> & t2) {
+          return t1.row() < t2.row();
+        });
 
       // populate A_inv with the temporary column
       for (size_t tidx = 0; tidx < temp_column.size(); ++tidx) {
@@ -656,9 +672,10 @@ void teaser::DRSCertifier::getLinearProjection(
   TEASER_DEBUG_INFO_MSG("A_inv finalized.");
 }
 
-void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& row,
-                                          const Eigen::Matrix<double, 1, Eigen::Dynamic>& theta,
-                                          Eigen::Vector4d* output) {
+void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd & A, const int & row,
+  const Eigen::Matrix<double, 1, Eigen::Dynamic> & theta,
+  Eigen::Vector4d * output)
+{
   // unit = sparse(4,1); unit(end) = 1;
   // vector = kron(theta,unit); % vector of size 4N+4 by 1
   // entireRow = A(blkIndices(row,4),:); % entireRow of size 4 by 4N+4
@@ -666,6 +683,6 @@ void teaser::DRSCertifier::getBlockRowSum(const Eigen::MatrixXd& A, const int& r
   Eigen::Matrix<double, 4, 1> unit = Eigen::Matrix<double, 4, 1>::Zero();
   unit(3, 0) = 1;
   Eigen::Matrix<double, Eigen::Dynamic, 1> vector =
-      vectorKron<double, Eigen::Dynamic, 4>(theta.transpose(), unit);
+    vectorKron<double, Eigen::Dynamic, 4>(theta.transpose(), unit);
   *output = A.middleRows<4>(row) * vector;
 }

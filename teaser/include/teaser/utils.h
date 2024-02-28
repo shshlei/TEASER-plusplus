@@ -8,14 +8,16 @@
 
 #pragma once
 
-#include <unordered_set>
-#include <vector>
-
 #include <Eigen/Core>
 #include <Eigen/SVD>
 
-namespace teaser {
-namespace utils {
+#include <unordered_set>
+#include <vector>
+
+namespace teaser
+{
+namespace utils
+{
 
 /**
  * A templated random sample function (w/o replacement). Based on MATLAB implementation of
@@ -28,8 +30,8 @@ namespace utils {
  * @return
  */
 template <class T, class URBG>
-std::vector<T> randomSample(std::vector<T> input, size_t num_samples, URBG&& g) {
-
+std::vector<T> randomSample(std::vector<T> input, size_t num_samples, URBG && g)
+{
   std::vector<T> output;
   output.reserve(num_samples);
   if (4 * num_samples > input.size()) {
@@ -40,7 +42,8 @@ std::vector<T> randomSample(std::vector<T> input, size_t num_samples, URBG&& g) 
     for (size_t i = 0; i < num_samples; ++i) {
       output.push_back(input[i]);
     }
-  } else {
+  }
+  else {
     // if the sample is small, repeatedly sample with replacement until num_samples
     // unique values
     std::unordered_set<size_t> sample_indices;
@@ -48,7 +51,7 @@ std::vector<T> randomSample(std::vector<T> input, size_t num_samples, URBG&& g) 
     while (sample_indices.size() < num_samples) {
       sample_indices.insert(dis(std::forward<URBG>(g)));
     }
-    for (auto&& i : sample_indices) {
+    for (auto && i : sample_indices) {
       output.push_back(input[i]);
     }
   }
@@ -62,7 +65,8 @@ std::vector<T> randomSample(std::vector<T> input, size_t num_samples, URBG&& g) 
  * @param rowToRemove index of row to remove. If >= matrix.rows(), no operation will be taken
  */
 template <class T, int R, int C>
-void removeRow(Eigen::Matrix<T, R, C>& matrix, unsigned int rowToRemove) {
+void removeRow(Eigen::Matrix<T, R, C> & matrix, unsigned int rowToRemove)
+{
   if (rowToRemove >= matrix.rows()) {
     return;
   }
@@ -71,7 +75,7 @@ void removeRow(Eigen::Matrix<T, R, C>& matrix, unsigned int rowToRemove) {
 
   if (rowToRemove < numRows) {
     matrix.block(rowToRemove, 0, numRows - rowToRemove, numCols) =
-        matrix.bottomRows(numRows - rowToRemove);
+      matrix.bottomRows(numRows - rowToRemove);
   }
 
   matrix.conservativeResize(numRows, numCols);
@@ -84,7 +88,8 @@ void removeRow(Eigen::Matrix<T, R, C>& matrix, unsigned int rowToRemove) {
  * @param colToRemove index of col to remove. If >= matrix.cols(), no operation will be taken
  */
 template <class T, int R, int C>
-void removeColumn(Eigen::Matrix<T, R, C>& matrix, unsigned int colToRemove) {
+void removeColumn(Eigen::Matrix<T, R, C> & matrix, unsigned int colToRemove)
+{
   if (colToRemove >= matrix.cols()) {
     return;
   }
@@ -93,7 +98,7 @@ void removeColumn(Eigen::Matrix<T, R, C>& matrix, unsigned int colToRemove) {
 
   if (colToRemove < numCols) {
     matrix.block(0, colToRemove, numRows, numCols - colToRemove) =
-        matrix.rightCols(numCols - colToRemove);
+      matrix.rightCols(numCols - colToRemove);
   }
 
   matrix.conservativeResize(numRows, numCols);
@@ -104,7 +109,9 @@ void removeColumn(Eigen::Matrix<T, R, C>& matrix, unsigned int colToRemove) {
  * @param X
  * @return the diameter of the set of points given
  */
-template <class T, int D> float calculateDiameter(const Eigen::Matrix<T, D, Eigen::Dynamic>& X) {
+template <class T, int D>
+float calculateDiameter(const Eigen::Matrix<T, D, Eigen::Dynamic> & X)
+{
   Eigen::Matrix<T, D, 1> cog = X.rowwise().sum() / X.cols();
   Eigen::Matrix<T, D, Eigen::Dynamic> P = X.colwise() - cog;
   Eigen::Matrix<T, 1, Eigen::Dynamic> temp = P.array().square().colwise().sum();
@@ -118,9 +125,10 @@ template <class T, int D> float calculateDiameter(const Eigen::Matrix<T, D, Eige
  * @param Y
  * @return a rotation matrix R
  */
-inline Eigen::Matrix3d svdRot(const Eigen::Matrix<double, 3, Eigen::Dynamic>& X,
-                              const Eigen::Matrix<double, 3, Eigen::Dynamic>& Y,
-                              const Eigen::Matrix<double, 1, Eigen::Dynamic>& W) {
+inline Eigen::Matrix3d svdRot(const Eigen::Matrix<double, 3, Eigen::Dynamic> & X,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & Y,
+  const Eigen::Matrix<double, 1, Eigen::Dynamic> & W)
+{
   // Assemble the correlation matrix H = X * Y'
   Eigen::Matrix3d H = X * W.asDiagonal() * Y.transpose();
 
@@ -142,9 +150,10 @@ inline Eigen::Matrix3d svdRot(const Eigen::Matrix<double, 3, Eigen::Dynamic>& X,
  * @param Y
  * @return a rotation matrix R whose dimension is 2D
  */
-inline Eigen::Matrix2d svdRot2d(const Eigen::Matrix<double, 2, Eigen::Dynamic>& X,
-                                const Eigen::Matrix<double, 2, Eigen::Dynamic>& Y,
-                                const Eigen::Matrix<double, 1, Eigen::Dynamic>& W) {
+inline Eigen::Matrix2d svdRot2d(const Eigen::Matrix<double, 2, Eigen::Dynamic> & X,
+  const Eigen::Matrix<double, 2, Eigen::Dynamic> & Y,
+  const Eigen::Matrix<double, 1, Eigen::Dynamic> & W)
+{
   // Assemble the correlation matrix H = X * Y'
   Eigen::Matrix2d H = X * W.asDiagonal() * Y.transpose();
 
@@ -167,7 +176,8 @@ inline Eigen::Matrix2d svdRot2d(const Eigen::Matrix<double, 2, Eigen::Dynamic>& 
  */
 template <class T>
 inline std::vector<T> maskVector(Eigen::Matrix<bool, 1, Eigen::Dynamic> mask,
-                                 const std::vector<T>& elements) {
+  const std::vector<T> & elements)
+{
   assert(mask.cols() == elements.size());
   std::vector<T> result;
   for (size_t i = 0; i < mask.cols(); ++i) {
@@ -184,7 +194,8 @@ inline std::vector<T> maskVector(Eigen::Matrix<bool, 1, Eigen::Dynamic> mask,
  * @return A vector containing indices of the true elements in the row vector
  */
 template <class T>
-inline std::vector<int> findNonzero(const Eigen::Matrix<T, 1, Eigen::Dynamic>& mask) {
+inline std::vector<int> findNonzero(const Eigen::Matrix<T, 1, Eigen::Dynamic> & mask)
+{
   std::vector<int> result;
   for (size_t i = 0; i < mask.cols(); ++i) {
     if (mask(i)) {
@@ -194,5 +205,5 @@ inline std::vector<int> findNonzero(const Eigen::Matrix<T, 1, Eigen::Dynamic>& m
   return result;
 }
 
-} // namespace utils
-} // namespace teaser
+}  // namespace utils
+}  // namespace teaser

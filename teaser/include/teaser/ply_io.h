@@ -9,14 +9,17 @@
 #pragma once
 
 #include "teaser/geometry.h"
+#include <string>
 
-namespace teaser {
+namespace teaser
+{
 
 /**
  * @brief A class for reading PLY files.
  *
  */
-class PLYReader {
+class PLYReader
+{
 public:
   /**
    * @brief Default constructor
@@ -26,13 +29,14 @@ public:
   /**
    * @brief A wrapper function for reading ply files into PointCloud
    */
-  int read(const std::string& file_name, PointCloud& cloud);
+  int read(const std::string & file_name, PointCloud & cloud);
 };
 
 /**
  * @brief A class for writing PLY files.
  */
-class PLYWriter {
+class PLYWriter
+{
 public:
   /**
    * @brief Default constructor
@@ -46,7 +50,7 @@ public:
    * @param binary_mode Set to true to write in binary mode
    * @return A status code
    */
-  int write(const std::string& file_name, const PointCloud& cloud, bool binary_mode = false);
+  int write(const std::string & file_name, const PointCloud & cloud, bool binary_mode = false);
 };
 
-} // namespace teaser
+}  // namespace teaser

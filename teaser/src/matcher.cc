@@ -6,6 +6,9 @@
  * See LICENSE for the license information
  */
 
+#include "teaser/matcher.h"
+
+#include "teaser/geometry.h"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -14,16 +17,14 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include "teaser/matcher.h"
-#include "teaser/geometry.h"
-
-namespace teaser {
+namespace teaser
+{
 
 std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
-    teaser::PointCloud& source_points, teaser::PointCloud& target_points,
-    teaser::FPFHCloud& source_features, teaser::FPFHCloud& target_features, bool use_absolute_scale,
-    bool use_crosscheck, bool use_tuple_test, float tuple_scale) {
-
+  teaser::PointCloud & source_points, teaser::PointCloud & target_points,
+  teaser::FPFHCloud & source_features, teaser::FPFHCloud & target_features, bool use_absolute_scale,
+  bool use_crosscheck, bool use_tuple_test, float tuple_scale)
+{
   Feature cloud_features;
   pointcloud_.push_back(source_points);
   pointcloud_.push_back(target_points);
@@ -31,7 +32,7 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
   // It compute the global_scale_ required to set correctly the search radius
   normalizePoints(use_absolute_scale);
 
-  for (auto& f : source_features) {
+  for (auto & f : source_features) {
     Eigen::VectorXf fpfh(33);
     for (int i = 0; i < 33; i++)
       fpfh(i) = f.histogram[i];
@@ -40,7 +41,7 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
   features_.push_back(cloud_features);
 
   cloud_features.clear();
-  for (auto& f : target_features) {
+  for (auto & f : target_features) {
     Eigen::VectorXf fpfh(33);
     for (int i = 0; i < 33; i++)
       fpfh(i) = f.histogram[i];
@@ -53,7 +54,8 @@ std::vector<std::pair<int, int>> Matcher::calculateCorrespondences(
   return corres_;
 }
 
-void Matcher::normalizePoints(bool use_absolute_scale) {
+void Matcher::normalizePoints(bool use_absolute_scale)
+{
   int num = 2;
   float scale = 0;
 
@@ -83,7 +85,7 @@ void Matcher::normalizePoints(bool use_absolute_scale) {
     // compute scale
     for (int ii = 0; ii < npti; ++ii) {
       Eigen::Vector3f p(pointcloud_[i][ii].x, pointcloud_[i][ii].y, pointcloud_[i][ii].z);
-      float temp = p.norm(); // because we extract mean in the previous stage.
+      float temp = p.norm();  // because we extract mean in the previous stage.
       if (temp > max_scale) {
         max_scale = temp;
       }
@@ -97,8 +99,9 @@ void Matcher::normalizePoints(bool use_absolute_scale) {
   // mean of the scale variation
   if (use_absolute_scale) {
     global_scale_ = 1.0f;
-  } else {
-    global_scale_ = scale; // second choice: we keep the maximum scale.
+  }
+  else {
+    global_scale_ = scale;  // second choice: we keep the maximum scale.
   }
 
   if (global_scale_ != 1.0f) {
@@ -112,10 +115,10 @@ void Matcher::normalizePoints(bool use_absolute_scale) {
     }
   }
 }
-void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float tuple_scale) {
-
-  int fi = 0; // source idx
-  int fj = 1; // destination idx
+void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float tuple_scale)
+{
+  int fi = 0;  // source idx
+  int fj = 1;  // destination idx
 
   bool swapped = false;
 
@@ -213,7 +216,8 @@ void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float t
         }
       }
     }
-  } else {
+  }
+  else {
     std::cout << "Skipping Cross Check." << std::endl;
   }
 
@@ -247,11 +251,11 @@ void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float t
 
       // collect 3 points from i-th fragment
       Eigen::Vector3f pti0 = {pointcloud_[fi][idi0].x, pointcloud_[fi][idi0].y,
-                              pointcloud_[fi][idi0].z};
+        pointcloud_[fi][idi0].z};
       Eigen::Vector3f pti1 = {pointcloud_[fi][idi1].x, pointcloud_[fi][idi1].y,
-                              pointcloud_[fi][idi1].z};
+        pointcloud_[fi][idi1].z};
       Eigen::Vector3f pti2 = {pointcloud_[fi][idi2].x, pointcloud_[fi][idi2].y,
-                              pointcloud_[fi][idi2].z};
+        pointcloud_[fi][idi2].z};
 
       float li0 = (pti0 - pti1).norm();
       float li1 = (pti1 - pti2).norm();
@@ -259,11 +263,11 @@ void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float t
 
       // collect 3 points from j-th fragment
       Eigen::Vector3f ptj0 = {pointcloud_[fj][idj0].x, pointcloud_[fj][idj0].y,
-                              pointcloud_[fj][idj0].z};
+        pointcloud_[fj][idj0].z};
       Eigen::Vector3f ptj1 = {pointcloud_[fj][idj1].x, pointcloud_[fj][idj1].y,
-                              pointcloud_[fj][idj1].z};
+        pointcloud_[fj][idj1].z};
       Eigen::Vector3f ptj2 = {pointcloud_[fj][idj2].x, pointcloud_[fj][idj2].y,
-                              pointcloud_[fj][idj2].z};
+        pointcloud_[fj][idj2].z};
 
       float lj0 = (ptj0 - ptj1).norm();
       float lj1 = (ptj1 - ptj2).norm();
@@ -280,7 +284,8 @@ void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float t
 
     for (size_t i = 0; i < corres_tuple.size(); ++i)
       corres.push_back(std::pair<int, int>(corres_tuple[i].first, corres_tuple[i].second));
-  } else {
+  }
+  else {
     std::cout << "Skipping Tuple Constraint." << std::endl;
   }
 
@@ -302,7 +307,9 @@ void Matcher::advancedMatching(bool use_crosscheck, bool use_tuple_test, float t
   corres_.erase(std::unique(corres_.begin(), corres_.end()), corres_.end());
 }
 
-template <typename T> void Matcher::buildKDTree(const std::vector<T>& data, Matcher::KDTree* tree) {
+template <typename T>
+void Matcher::buildKDTree(const std::vector<T> & data, Matcher::KDTree * tree)
+{
   int rows, dim;
   rows = (int)data.size();
   dim = (int)data[0].size();
@@ -317,8 +324,9 @@ template <typename T> void Matcher::buildKDTree(const std::vector<T>& data, Matc
 }
 
 template <typename T>
-void Matcher::searchKDTree(Matcher::KDTree* tree, const T& input, std::vector<int>& indices,
-                           std::vector<float>& dists, int nn) {
+void Matcher::searchKDTree(Matcher::KDTree * tree, const T & input, std::vector<int> & indices,
+  std::vector<float> & dists, int nn)
+{
   int rows_t = 1;
   int dim = input.size();
 
@@ -336,4 +344,4 @@ void Matcher::searchKDTree(Matcher::KDTree* tree, const T& input, std::vector<in
   tree->knnSearch(query_mat, indices_mat, dists_mat, nn, flann::SearchParams(128));
 }
 
-} // namespace teaser
+}  // namespace teaser

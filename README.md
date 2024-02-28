@@ -1,9 +1,4 @@
 # TEASER++: fast & certifiable 3D registration 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation Status](https://readthedocs.org/projects/teaser/badge/?version=latest)](https://teaser.readthedocs.io/en/latest/?badge=latest)
-[<img src="https://github.com/MIT-SPARK/TEASER-plusplus/workflows/build/badge.svg">](https://github.com/MIT-SPARK/TEASER-plusplus/actions)
-
-![TEASER++ 3DSmooth](examples/teaser_python_3dsmooth/3dsmooth_example.gif)
 
 TEASER++ is a fast and certifiably-robust point cloud registration library written in C++, with Python and MATLAB bindings.
 
@@ -90,89 +85,17 @@ cd .. && cd examples/teaser_cpp_ply && mkdir build && cd build
 cmake .. && make
 ./teaser_cpp_ply
 ```
-### Minimal Python 3 example
-Run the following script to show a minimal Python 3 example (needs Anaconda installed):
-```shell script
-sudo apt install cmake libeigen3-dev libboost-all-dev
-conda create -n teaser_test python=3.6 numpy
-conda activate teaser_test
-conda install -c open3d-admin open3d=0.9.0.0
-git clone https://github.com/MIT-SPARK/TEASER-plusplus.git
-cd TEASER-plusplus && mkdir build && cd build
-cmake -DTEASERPP_PYTHON_VERSION=3.6 .. && make teaserpp_python
-cd python && pip install .
-cd ../.. && cd examples/teaser_python_ply 
-python teaser_python_ply.py
-```
-You should see output similar to this:
-```shell script
-==================================================
-        TEASER++ Python registration example      
-==================================================
-*** [pmc heuristic: thread 1]   current max clique = 563,  time = 0.00185895 sec
-...
-*** [pmc: thread 2]   current max clique = 605,  time = 0.618481 sec
------------------------------------------------------------------------
-=====================================
-          TEASER++ Results           
-=====================================
-Expected rotation: 
-[[ 0.99692656  0.06687358 -0.04066644]
- [-0.06612899  0.99761788  0.01940087]
- [ 0.04186755 -0.01665178  0.99897777]]
-Estimated rotation: 
-[[ 9.96883589e-01  7.88648224e-02 -1.85738207e-03]
- [-7.88858464e-02  9.96487579e-01 -2.80985536e-02]
- [-3.65129272e-04  2.81575081e-02  9.99603432e-01]]
-Error (deg): 
-0.06284342361637997
-Expected translation: 
-[-0.11557694 -0.03877054  0.11487489]
-Estimated translation: 
-[-0.11652176 -0.0373522   0.111885  ]
-Error (m): 
-0.0034414811018018978
-Number of correspondences:  1889
-Number of outliers:  1700
-Time taken (s):  0.9492652416229248
-```
-
-### Reproduce the GIF Above 
-Run the following script:
-```shell script
-sudo apt install cmake libeigen3-dev libboost-all-dev
-conda create -n teaser_3dsmooth python=3.6 numpy
-conda activate teaser_3dsmooth
-conda install -c open3d-admin open3d=0.9.0.0
-conda install scikit-learn 
-git clone https://github.com/MIT-SPARK/TEASER-plusplus.git
-cd TEASER-plusplus && mkdir build && cd build
-cmake -DTEASERPP_PYTHON_VERSION=3.6 .. && make teaserpp_python
-cd python && pip install .
-cd ../.. && cd examples/teaser_python_3dsmooth
-python teaser_python_3dsmooth.py
-```
-You should be able to see Open3D windows showing registration results:
-
-![TEASER++ 3DSmooth](examples/teaser_python_3dsmooth/3dsmooth_example.gif)
-
 ## Getting Started
 - Installation
   - [Dependencies](https://teaser.readthedocs.io/en/latest/installation.html#installing-dependencies)
   - [Compilation](https://teaser.readthedocs.io/en/latest/installation.html#compilation-and-installation)
   - [Install C++ Libraries](https://teaser.readthedocs.io/en/latest/installation.html#installing-c-libraries-and-headers)
-  - [Install Python Bindings](https://teaser.readthedocs.io/en/latest/installation.html#installing-python-bindings)
-  - [Install MATLAB Bindings](https://teaser.readthedocs.io/en/latest/installation.html#installing-matlab-bindings)
   - [Run Tests](https://teaser.readthedocs.io/en/latest/installation.html#run-tests)
 - Usage
   - [In C++](https://teaser.readthedocs.io/en/latest/quickstart.html#usage-in-c-projects)
-  - [In Python](https://teaser.readthedocs.io/en/latest/quickstart.html#usage-in-python-projects)
-  - [In MATLAB](https://teaser.readthedocs.io/en/latest/quickstart.html#usage-in-matlab-projects)
   - [In ROS](https://teaser.readthedocs.io/en/latest/quickstart.html#usage-in-ros-projects)
 - API Documentation
   - [C++](https://teaser.readthedocs.io/en/latest/api-cpp.html)
-  - [Python](https://teaser.readthedocs.io/en/latest/api-python.html)
-  - [MATLAB](https://teaser.readthedocs.io/en/latest/api-matlab.html)
 
 ## Other Publications
 Other publications related to TEASER include:

@@ -6,24 +6,28 @@
  * See LICENSE for the license information
  */
 
-#include <sstream>
+#include "teaser/ply_io.h"
+
+#include "tinyply.h"
+
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <cstring>
-
-#include "teaser/ply_io.h"
-#include "tinyply.h"
+#include <sstream>
 
 // Internal datatypes for storing ply vertices
-struct float3 {
+struct float3
+{
   float x, y, z;
 };
-struct double3 {
+struct double3
+{
   double x, y, z;
 };
 
-int teaser::PLYReader::read(const std::string& file_name, teaser::PointCloud& cloud) {
+int teaser::PLYReader::read(const std::string & file_name, teaser::PointCloud & cloud)
+{
   std::unique_ptr<std::istream> file_stream;
   std::vector<uint8_t> byte_buffer;
 
@@ -42,7 +46,8 @@ int teaser::PLYReader::read(const std::string& file_name, teaser::PointCloud& cl
 
     try {
       vertices = file.request_properties_from_element("vertex", {"x", "y", "z"});
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception & e) {
       std::cerr << "tinyply exception: " << e.what() << std::endl;
       return -1;
     }
@@ -55,7 +60,7 @@ int teaser::PLYReader::read(const std::string& file_name, teaser::PointCloud& cl
         std::vector<float3> verts_floats(vertices->count);
         const size_t numVerticesBytes = vertices->buffer.size_bytes();
         std::memcpy(verts_floats.data(), vertices->buffer.get(), numVerticesBytes);
-        for (auto& i : verts_floats) {
+        for (auto & i : verts_floats) {
           cloud.push_back({i.x, i.y, i.z});
         }
       }
@@ -63,14 +68,14 @@ int teaser::PLYReader::read(const std::string& file_name, teaser::PointCloud& cl
         std::vector<double3> verts_doubles(vertices->count);
         const size_t numVerticesBytes = vertices->buffer.size_bytes();
         std::memcpy(verts_doubles.data(), vertices->buffer.get(), numVerticesBytes);
-        for (auto& i : verts_doubles) {
+        for (auto & i : verts_doubles) {
           cloud.push_back(
-              {static_cast<float>(i.x), static_cast<float>(i.y), static_cast<float>(i.z)});
+            {static_cast<float>(i.x), static_cast<float>(i.y), static_cast<float>(i.z)});
         }
       }
     }
-
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception & e) {
     std::cerr << "Caught tinyply exception: " << e.what() << std::endl;
     return -1;
   }
@@ -78,13 +83,15 @@ int teaser::PLYReader::read(const std::string& file_name, teaser::PointCloud& cl
   return 0;
 }
 
-int teaser::PLYWriter::write(const std::string& file_name, const teaser::PointCloud& cloud,
-                             bool binary_mode) {
+int teaser::PLYWriter::write(const std::string & file_name, const teaser::PointCloud & cloud,
+  bool binary_mode)
+{
   // Open file buffer according to binary mode
   std::filebuf fb;
   if (binary_mode) {
     fb.open(file_name, std::ios::out | std::ios::binary);
-  } else {
+  }
+  else {
     fb.open(file_name, std::ios::out);
   }
 
@@ -98,12 +105,12 @@ int teaser::PLYWriter::write(const std::string& file_name, const teaser::PointCl
   // Use tinyply to write to ply file
   tinyply::PlyFile ply_file;
   std::vector<float3> temp_vertices;
-  for (auto& i : cloud) {
+  for (auto & i : cloud) {
     temp_vertices.push_back({i.x, i.y, i.z});
   }
   ply_file.add_properties_to_element(
-      "vertex", {"x", "y", "z"}, tinyply::Type::FLOAT32, temp_vertices.size(),
-      reinterpret_cast<uint8_t*>(temp_vertices.data()), tinyply::Type::INVALID, 0);
+    "vertex", {"x", "y", "z"}, tinyply::Type::FLOAT32, temp_vertices.size(),
+    reinterpret_cast<uint8_t *>(temp_vertices.data()), tinyply::Type::INVALID, 0);
   ply_file.write(outstream, binary_mode);
 
   return 0;

@@ -8,19 +8,19 @@
 
 #include "teaser/registration.h"
 
+#include "teaser/graph.h"
+#include "teaser/macros.h"
+#include "teaser/utils.h"
+
 #include <cmath>
 #include <functional>
 #include <iostream>
-#include <limits>
 #include <iterator>
+#include <limits>
 
-#include "teaser/utils.h"
-#include "teaser/graph.h"
-#include "teaser/macros.h"
-
-void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
-                                          const Eigen::RowVectorXd& ranges, double* estimate,
-                                          Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
+void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd & X, const Eigen::RowVectorXd & ranges, double * estimate,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
   // check input parameters
   bool dimension_inconsistent = (X.rows() != ranges.rows()) || (X.cols() != ranges.cols());
   if (inliers) {
@@ -28,7 +28,7 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
   }
   bool only_one_element = (X.rows() == 1) && (X.cols() == 1);
   assert(!dimension_inconsistent);
-  assert(!only_one_element); // TODO: admit a trivial solution
+  assert(!only_one_element);  // TODO: admit a trivial solution
 
   int N = X.cols();
   std::vector<std::pair<double, int>> h;
@@ -39,7 +39,7 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
   // ascending order
   std::sort(h.begin(), h.end(),
-            [](std::pair<double, int> a, std::pair<double, int> b) { return a.first < b.first; });
+    [](std::pair<double, int> a, std::pair<double, int> b) { return a.first < b.first; });
 
   // calculate weights
   Eigen::RowVectorXd weights = ranges.array().square();
@@ -56,8 +56,7 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
   double sum_xi_square = 0;
 
   for (size_t i = 0; i < nr_centers; ++i) {
-
-    int idx = int(std::abs(h.at(i).second)) - 1; // Indices starting at 1
+    int idx = int(std::abs(h.at(i).second)) - 1;  // Indices starting at 1
     int epsilon = (h.at(i).second > 0) ? 1 : -1;
 
     consensus_set_cardinal += epsilon;
@@ -69,8 +68,7 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
 
     x_hat(i) = dot_X_weights / dot_weights_consensus;
 
-    double residual =
-        consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square - 2 * sum_xi * x_hat(i);
+    double residual = consensus_set_cardinal * x_hat(i) * x_hat(i) + sum_xi_square - 2 * sum_xi * x_hat(i);
     x_cost(i) = residual + ranges_inverse_sum;
   }
 
@@ -87,10 +85,11 @@ void teaser::ScalarTLSEstimator::estimate(const Eigen::RowVectorXd& X,
   }
 }
 
-void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
-                                                const Eigen::RowVectorXd& ranges, const int& s,
-                                                double* estimate,
-                                                Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
+void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd & X,
+  const Eigen::RowVectorXd & ranges, const int & s,
+  double * estimate,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
   // check input parameters
   bool dimension_inconsistent = (X.rows() != ranges.rows()) || (X.cols() != ranges.cols());
   if (inliers) {
@@ -98,7 +97,7 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
   }
   bool only_one_element = (X.rows() == 1) && (X.cols() == 1);
   assert(!dimension_inconsistent);
-  assert(!only_one_element); // TODO: admit a trivial solution
+  assert(!only_one_element);  // TODO: admit a trivial solution
 
   // Prepare variables for calculations
   int N = X.cols();
@@ -126,12 +125,12 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
   std::vector<double> dot_weights_consensus_vec(nr_centers, 0);
   std::vector<std::vector<double>> X_consensus_table(nr_centers, std::vector<double>());
 
-  auto inner_loop_f = [&](const size_t& i, const size_t& jh, const size_t& jl_lower_bound,
-                          const size_t& jl_upper_bound) {
-    double& ranges_inverse_sum = ranges_inverse_sum_vec[i];
-    double& dot_X_weights = dot_X_weights_vec[i];
-    double& dot_weights_consensus = dot_weights_consensus_vec[i];
-    std::vector<double>& X_consensus_vec = X_consensus_table[i];
+  auto inner_loop_f = [&](const size_t & i, const size_t & jh, const size_t & jl_lower_bound,
+                        const size_t & jl_upper_bound) {
+    double & ranges_inverse_sum = ranges_inverse_sum_vec[i];
+    double & dot_X_weights = dot_X_weights_vec[i];
+    double & dot_weights_consensus = dot_weights_consensus_vec[i];
+    std::vector<double> & X_consensus_vec = X_consensus_table[i];
 
     size_t j = 0;
     for (size_t jl = jl_lower_bound; jl < jl_upper_bound; ++jl) {
@@ -141,7 +140,8 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
         dot_X_weights += X(j) * weights(j);
         dot_weights_consensus += weights(j);
         X_consensus_vec.push_back(X(j));
-      } else {
+      }
+      else {
         ranges_inverse_sum += ranges(j);
       }
     }
@@ -159,9 +159,9 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
     }
   };
 
-#pragma omp parallel for default(none) shared(                                                     \
-    jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec, dot_weights_consensus_vec,      \
-    X_consensus_table, h_centers, weights, N, X, x_hat, x_cost, s, ranges, inner_loop_f)
+#pragma omp parallel for default(none) shared(                                              \
+  jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec, dot_weights_consensus_vec, \
+  X_consensus_table, h_centers, weights, N, X, x_hat, x_cost, s, ranges, inner_loop_f)
   for (size_t ih = 0; ih < ih_bound; ih += s) {
     for (size_t jh = 0; jh < jh_bound; jh += s) {
       for (size_t il = 0; il < s; ++il) {
@@ -173,19 +173,19 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
 
   // finish the left over entries
   // 1. Finish the unfinished js
-#pragma omp parallel for default(none)                                                             \
-    shared(jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec,                          \
-           dot_weights_consensus_vec, X_consensus_table, h_centers, weights, N, X, x_hat, x_cost,  \
-           s, ranges, nr_centers, inner_loop_f)
+#pragma omp parallel for default(none)                                                     \
+  shared(jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec,                    \
+    dot_weights_consensus_vec, X_consensus_table, h_centers, weights, N, X, x_hat, x_cost, \
+    s, ranges, nr_centers, inner_loop_f)
   for (size_t i = 0; i < nr_centers; ++i) {
     inner_loop_f(i, 0, jh_bound, N);
   }
 
   // 2. Finish the unfinished is
-#pragma omp parallel for default(none)                                                             \
-    shared(jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec,                          \
-           dot_weights_consensus_vec, X_consensus_table, h_centers, weights, N, X, x_hat, x_cost,  \
-           s, ranges, nr_centers, inner_loop_f)
+#pragma omp parallel for default(none)                                                     \
+  shared(jh_bound, ih_bound, ranges_inverse_sum_vec, dot_X_weights_vec,                    \
+    dot_weights_consensus_vec, X_consensus_table, h_centers, weights, N, X, x_hat, x_cost, \
+    s, ranges, nr_centers, inner_loop_f)
   for (size_t i = ih_bound; i < nr_centers; ++i) {
     inner_loop_f(i, 0, 0, N);
   }
@@ -204,13 +204,14 @@ void teaser::ScalarTLSEstimator::estimate_tiled(const Eigen::RowVectorXd& X,
 }
 
 void teaser::FastGlobalRegistrationSolver::solveForRotation(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst, Eigen::Matrix3d* rotation,
-    Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
-  assert(rotation);                 // make sure R is not a nullptr
-  assert(src.cols() == dst.cols()); // check dimensions of input data
-  assert(params_.gnc_factor > 1);   // make sure mu will decrease
-  assert(params_.noise_bound != 0); // make sure noise bound is not zero
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst, Eigen::Matrix3d * rotation,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
+  assert(rotation);                  // make sure R is not a nullptr
+  assert(src.cols() == dst.cols());  // check dimensions of input data
+  assert(params_.gnc_factor > 1);    // make sure mu will decrease
+  assert(params_.noise_bound != 0);  // make sure noise bound is not zero
   if (inliers) {
     assert(inliers->cols() == src.cols());
   }
@@ -229,7 +230,7 @@ void teaser::FastGlobalRegistrationSolver::solveForRotation(
 
   // stopping condition for mu
   double min_mu = 1.0;
-  *rotation = Eigen::Matrix3d::Identity(3, 3); // rotation matrix
+  *rotation = Eigen::Matrix3d::Identity(3, 3);  // rotation matrix
   Eigen::Matrix<double, 1, Eigen::Dynamic> l_pq(1, match_size);
   l_pq.setOnes(1, match_size);
 
@@ -257,7 +258,7 @@ void teaser::FastGlobalRegistrationSolver::solveForRotation(
     Eigen::Matrix<double, 3, Eigen::Dynamic> diff = (dst - (*rotation) * src).array().square();
     cost_ = ((scaled_mu * diff.colwise().sum()).array() /
              (scaled_mu + diff.colwise().sum().array()).array())
-                .sum();
+              .sum();
 
     // additional termination conditions
     if (cost_ < params_.cost_threshold || mu < min_mu) {
@@ -278,13 +279,14 @@ void teaser::FastGlobalRegistrationSolver::solveForRotation(
 }
 
 void teaser::QuatroSolver::solveForRotation(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst, Eigen::Matrix3d* rotation,
-    Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
-  assert(rotation);                 // make sure R is not a nullptr
-  assert(src.cols() == dst.cols()); // check dimensions of input data
-  assert(params_.gnc_factor > 1);   // make sure mu will increase
-  assert(params_.noise_bound != 0); // make sure noise sigma is not zero
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst, Eigen::Matrix3d * rotation,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
+  assert(rotation);                  // make sure R is not a nullptr
+  assert(src.cols() == dst.cols());  // check dimensions of input data
+  assert(params_.gnc_factor > 1);    // make sure mu will increase
+  assert(params_.noise_bound != 0);  // make sure noise sigma is not zero
   if (inliers) {
     assert(inliers->cols() == src.cols());
   }
@@ -319,9 +321,9 @@ void teaser::QuatroSolver::solveForRotation(
    */
 
   // Prepare some variables
-  size_t match_size = src.cols(); // number of correspondences
+  size_t match_size = src.cols();  // number of correspondences
 
-  double mu = 1; // arbitrary starting mu
+  double mu = 1;  // arbitrary starting mu
 
   double prev_cost = std::numeric_limits<double>::infinity();
   cost_ = std::numeric_limits<double>::infinity();
@@ -341,7 +343,6 @@ void teaser::QuatroSolver::solveForRotation(
 
   // Loop for performing GNC-TLS
   for (size_t i = 0; i < params_.max_iterations; ++i) {
-
     // Fix weights and perform SVD 2d rotation estimation
     rotation_2d = teaser::utils::svdRot2d(src_2d, dst_2d, weights);
 
@@ -356,7 +357,7 @@ void teaser::QuatroSolver::solveForRotation(
       // i.e., little to none noise
       if (mu <= 0) {
         TEASER_DEBUG_INFO_MSG(
-            "GNC-TLS terminated because maximum residual at initialization is very small.");
+          "GNC-TLS terminated because maximum residual at initialization is very small.");
         break;
       }
     }
@@ -372,18 +373,18 @@ void teaser::QuatroSolver::solveForRotation(
 
       if (residuals_sq(j) >= th1) {
         weights(j) = 0;
-      } else if (residuals_sq(j) <= th2) {
+      }
+      else if (residuals_sq(j) <= th2) {
         weights(j) = 1;
-      } else {
+      }
+      else {
         weights(j) = sqrt(noise_bound_sq * mu * (mu + 1) / residuals_sq(j)) - mu;
         assert(weights(j) >= 0 && weights(j) <= 1);
       }
-
     }
 
     // Calculate cost
     double cost_diff = std::abs(cost_ - prev_cost);
-
 
     // Increase mu
     mu = mu * params_.gnc_factor;
@@ -409,15 +410,15 @@ void teaser::QuatroSolver::solveForRotation(
   (*rotation).block<2, 2>(0, 0) = rotation_2d;
 }
 
-void teaser::TLSScaleSolver::solveForScale(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                                           const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst,
-                                           double* scale,
-                                           Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
-
+void teaser::TLSScaleSolver::solveForScale(const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst,
+  double * scale,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
   Eigen::Matrix<double, 1, Eigen::Dynamic> v1_dist =
-      src.array().square().colwise().sum().array().sqrt();
+    src.array().square().colwise().sum().array().sqrt();
   Eigen::Matrix<double, 1, Eigen::Dynamic> v2_dist =
-      dst.array().square().colwise().sum().array().sqrt();
+    dst.array().square().colwise().sum().array().sqrt();
 
   Eigen::Matrix<double, 1, Eigen::Dynamic> raw_scales = v2_dist.array() / v1_dist.array();
   double beta = 2 * noise_bound_ * sqrt(cbar2_);
@@ -427,16 +428,17 @@ void teaser::TLSScaleSolver::solveForScale(const Eigen::Matrix<double, 3, Eigen:
 }
 
 void teaser::ScaleInliersSelector::solveForScale(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst, double* scale,
-    Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst, double * scale,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
   // We assume no scale difference between the two vectors of points.
   *scale = 1;
 
   Eigen::Matrix<double, 1, Eigen::Dynamic> v1_dist =
-      src.array().square().colwise().sum().array().sqrt();
+    src.array().square().colwise().sum().array().sqrt();
   Eigen::Matrix<double, 1, Eigen::Dynamic> v2_dist =
-      dst.array().square().colwise().sum().array().sqrt();
+    dst.array().square().colwise().sum().array().sqrt();
   double beta = 2 * noise_bound_ * sqrt(cbar2_);
 
   // A pair-wise correspondence is an inlier if it passes the following test:
@@ -444,10 +446,10 @@ void teaser::ScaleInliersSelector::solveForScale(
   *inliers = (v1_dist.array() - v2_dist.array()).array().abs() <= beta;
 }
 
-void teaser::TLSTranslationSolver::solveForTranslation(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst, Eigen::Vector3d* translation,
-    Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
+void teaser::TLSTranslationSolver::solveForTranslation(const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst, Eigen::Vector3d * translation,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
   assert(src.cols() == dst.cols());
   if (inliers) {
     assert(inliers->cols() == src.cols());
@@ -464,7 +466,7 @@ void teaser::TLSTranslationSolver::solveForTranslation(
   // Estimate x, y, and z component of translation: perform TLS on each row
   *inliers = Eigen::Matrix<bool, 1, Eigen::Dynamic>::Ones(1, N);
   Eigen::Matrix<bool, 1, Eigen::Dynamic> inliers_temp(1, N);
-  for (size_t i = 0; i < raw_translation.rows(); ++i) {
+  for (std::size_t i = 0; i < raw_translation.rows(); ++i) {
     tls_estimator_.estimate(raw_translation.row(i), alphas, &((*translation)(i)), &inliers_temp);
     // element-wise AND using component-wise product (Eigen 3.2 compatible)
     // a point is an inlier iff. x,y,z are all inliers
@@ -473,14 +475,15 @@ void teaser::TLSTranslationSolver::solveForTranslation(
 }
 
 teaser::RobustRegistrationSolver::RobustRegistrationSolver(
-    const teaser::RobustRegistrationSolver::Params& params) {
+  const teaser::RobustRegistrationSolver::Params & params)
+{
   reset(params);
 }
 
 Eigen::Matrix<double, 3, Eigen::Dynamic>
-teaser::RobustRegistrationSolver::computeTIMs(const Eigen::Matrix<double, 3, Eigen::Dynamic>& v,
-                                              Eigen::Matrix<int, 2, Eigen::Dynamic>* map) {
-
+teaser::RobustRegistrationSolver::computeTIMs(const Eigen::Matrix<double, 3, Eigen::Dynamic> & v,
+  Eigen::Matrix<int, 2, Eigen::Dynamic> * map)
+{
   auto N = v.cols();
   Eigen::Matrix<double, 3, Eigen::Dynamic> vtilde(3, N * (N - 1) / 2);
   map->resize(2, N * (N - 1) / 2);
@@ -519,12 +522,11 @@ teaser::RobustRegistrationSolver::computeTIMs(const Eigen::Matrix<double, 3, Eig
 }
 
 teaser::RegistrationSolution
-teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
-                                        const teaser::PointCloud& dst_cloud,
-                                        const std::vector<std::pair<int, int>> correspondences) {
+teaser::RobustRegistrationSolver::solve(const teaser::PointCloud & src_cloud, const teaser::PointCloud & dst_cloud, const std::vector<std::pair<int, int>> & correspondences)
+{
   Eigen::Matrix<double, 3, Eigen::Dynamic> src(3, correspondences.size());
   Eigen::Matrix<double, 3, Eigen::Dynamic> dst(3, correspondences.size());
-  for (size_t i = 0; i < correspondences.size(); ++i) {
+  for (std::size_t i = 0; i < correspondences.size(); ++i) {
     auto src_idx = std::get<0>(correspondences[i]);
     auto dst_idx = std::get<1>(correspondences[i]);
     src.col(i) << src_cloud[src_idx].x, src_cloud[src_idx].y, src_cloud[src_idx].z;
@@ -534,19 +536,20 @@ teaser::RobustRegistrationSolver::solve(const teaser::PointCloud& src_cloud,
 }
 
 teaser::RegistrationSolution
-teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-                                        const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst) {
+teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dynamic> & src, const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst)
+{
   assert(scale_solver_ && rotation_solver_ && translation_solver_);
 
   // Handle deprecated params
   if (!params_.use_max_clique) {
     TEASER_DEBUG_INFO_MSG(
-        "Using deprecated param field use_max_clique. Switch to inlier_selection_mode instead.");
+      "Using deprecated param field use_max_clique. Switch to inlier_selection_mode instead.");
     params_.inlier_selection_mode = INLIER_SELECTION_MODE::NONE;
   }
   if (!params_.max_clique_exact_solution) {
-    TEASER_DEBUG_INFO_MSG("Using deprecated param field max_clique_exact_solution. Switch to "
-                          "inlier_selection_mode instead.");
+    TEASER_DEBUG_INFO_MSG(
+      "Using deprecated param field max_clique_exact_solution. Switch to "
+      "inlier_selection_mode instead.");
     params_.inlier_selection_mode = INLIER_SELECTION_MODE::PMC_HEU;
   }
 
@@ -567,7 +570,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   src_tims_ = computeTIMs(src, &src_tims_map_);
   dst_tims_ = computeTIMs(dst, &dst_tims_map_);
   TEASER_DEBUG_INFO_MSG(
-      "Starting scale solver (only selecting inliers if scale estimation has been disabled).");
+    "Starting scale solver (only selecting inliers if scale estimation has been disabled).");
   solveForScale(src_tims_, dst_tims_);
   TEASER_DEBUG_INFO_MSG("Scale estimation complete.");
 
@@ -575,7 +578,6 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
   // Note: the max_clique_ vector holds the indices of original measurements that are within the
   // max clique of the built inlier graph.
   if (params_.inlier_selection_mode != INLIER_SELECTION_MODE::NONE) {
-
     // Create inlier graph: A graph with (indices of) original measurements as vertices, and edges
     // only when the TIM between two measurements are inliers. Note: src_tims_map_ is the same as
     // dst_tim_map_
@@ -590,9 +592,11 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
 
     if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::PMC_EXACT) {
       clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::PMC_EXACT;
-    } else if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::PMC_HEU) {
+    }
+    else if (params_.inlier_selection_mode == INLIER_SELECTION_MODE::PMC_HEU) {
       clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::PMC_HEU;
-    } else {
+    }
+    else {
       clique_params.solver_mode = teaser::MaxCliqueSolver::CLIQUE_SOLVER_MODE::KCORE_HEU;
     }
     clique_params.time_limit = params_.max_clique_time_limit;
@@ -613,7 +617,8 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       solution_.valid = false;
       return solution_;
     }
-  } else {
+  }
+  else {
     // not using clique filtering is equivalent to saying all measurements are in the max clique
     max_clique_.reserve(src.cols());
     for (size_t i = 0; i < src.cols(); ++i) {
@@ -630,11 +635,12 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
     src_tims_map_rotation_.resize(2, max_clique_.size());
     dst_tims_map_rotation_.resize(2, max_clique_.size());
     for (size_t i = 0; i < max_clique_.size(); ++i) {
-      const auto& root = max_clique_[i];
+      const auto & root = max_clique_[i];
       int leaf;
       if (i != max_clique_.size() - 1) {
         leaf = max_clique_[i + 1];
-      } else {
+      }
+      else {
         leaf = max_clique_[0];
       }
       pruned_src_tims_.col(i) = src.col(leaf) - src.col(root);
@@ -646,7 +652,8 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
       src_tims_map_rotation_(0, i) = leaf;
       src_tims_map_rotation_(1, i) = root;
     }
-  } else {
+  }
+  else {
     // complete graph
     TEASER_DEBUG_INFO_MSG("Using complete graph for GNC rotation.");
     // select the inlier measurements with max clique
@@ -691,8 +698,7 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
 
   // Solve for translation
   TEASER_DEBUG_INFO_MSG("Starting translation solver.");
-  solveForTranslation(solution_.scale * solution_.rotation * rotation_pruned_src,
-                      rotation_pruned_dst);
+  solveForTranslation(solution_.scale * solution_.rotation * rotation_pruned_src, rotation_pruned_dst);
   TEASER_DEBUG_INFO_MSG("Translation estimation complete.");
 
   // Find the final inliers
@@ -705,38 +711,37 @@ teaser::RobustRegistrationSolver::solve(const Eigen::Matrix<double, 3, Eigen::Dy
 }
 
 double teaser::RobustRegistrationSolver::solveForScale(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v2) {
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & v1,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & v2)
+{
   scale_inliers_mask_.resize(1, v1.cols());
   scale_solver_->solveForScale(v1, v2, &(solution_.scale), &scale_inliers_mask_);
   return solution_.scale;
 }
 
-Eigen::Vector3d teaser::RobustRegistrationSolver::solveForTranslation(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v2) {
+Eigen::Vector3d teaser::RobustRegistrationSolver::solveForTranslation(const Eigen::Matrix<double, 3, Eigen::Dynamic> & v1, const Eigen::Matrix<double, 3, Eigen::Dynamic> & v2)
+{
   translation_inliers_mask_.resize(1, v1.cols());
-  translation_solver_->solveForTranslation(v1, v2, &(solution_.translation),
-                                           &translation_inliers_mask_);
+  translation_solver_->solveForTranslation(v1, v2, &(solution_.translation), &translation_inliers_mask_);
   return solution_.translation;
 }
 
-Eigen::Matrix3d teaser::RobustRegistrationSolver::solveForRotation(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v1,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& v2) {
+Eigen::Matrix3d teaser::RobustRegistrationSolver::solveForRotation(const Eigen::Matrix<double, 3, Eigen::Dynamic> & v1,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & v2)
+{
   rotation_inliers_mask_.resize(1, v1.cols());
   rotation_solver_->solveForRotation(v1, v2, &(solution_.rotation), &rotation_inliers_mask_);
   return solution_.rotation;
 }
 
-void teaser::GNCTLSRotationSolver::solveForRotation(
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& src,
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& dst, Eigen::Matrix3d* rotation,
-    Eigen::Matrix<bool, 1, Eigen::Dynamic>* inliers) {
-  assert(rotation);                 // make sure R is not a nullptr
-  assert(src.cols() == dst.cols()); // check dimensions of input data
-  assert(params_.gnc_factor > 1);   // make sure mu will increase
-  assert(params_.noise_bound != 0); // make sure noise sigma is not zero
+void teaser::GNCTLSRotationSolver::solveForRotation(const Eigen::Matrix<double, 3, Eigen::Dynamic> & src,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic> & dst, Eigen::Matrix3d * rotation,
+  Eigen::Matrix<bool, 1, Eigen::Dynamic> * inliers)
+{
+  assert(rotation);                  // make sure R is not a nullptr
+  assert(src.cols() == dst.cols());  // check dimensions of input data
+  assert(params_.gnc_factor > 1);    // make sure mu will increase
+  assert(params_.noise_bound != 0);  // make sure noise sigma is not zero
   if (inliers) {
     assert(inliers->cols() == src.cols());
   }
@@ -752,9 +757,9 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
    */
 
   // Prepare some variables
-  size_t match_size = src.cols(); // number of correspondences
+  size_t match_size = src.cols();  // number of correspondences
 
-  double mu = 1; // arbitrary starting mu
+  double mu = 1;  // arbitrary starting mu
 
   double prev_cost = std::numeric_limits<double>::infinity();
   cost_ = std::numeric_limits<double>::infinity();
@@ -772,7 +777,6 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
 
   // Loop for performing GNC-TLS
   for (size_t i = 0; i < params_.max_iterations; ++i) {
-
     // Fix weights and perform SVD rotation estimation
     *rotation = teaser::utils::svdRot(src, dst, weights);
 
@@ -787,7 +791,7 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
       // i.e., little to none noise
       if (mu <= 0) {
         TEASER_DEBUG_INFO_MSG(
-            "GNC-TLS terminated because maximum residual at initialization is very small.");
+          "GNC-TLS terminated because maximum residual at initialization is very small.");
         break;
       }
     }
@@ -803,9 +807,11 @@ void teaser::GNCTLSRotationSolver::solveForRotation(
 
       if (residuals_sq(j) >= th1) {
         weights(j) = 0;
-      } else if (residuals_sq(j) <= th2) {
+      }
+      else if (residuals_sq(j) <= th2) {
         weights(j) = 1;
-      } else {
+      }
+      else {
         weights(j) = sqrt(noise_bound_sq * mu * (mu + 1) / residuals_sq(j)) - mu;
         assert(weights(j) >= 0 && weights(j) <= 1);
       }

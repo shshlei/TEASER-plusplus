@@ -10,7 +10,7 @@
 
 // Macro constants for generating noise and outliers
 #define NOISE_BOUND 0.001
-#define N_OUTLIERS 1700
+#define N_OUTLIERS 1600
 #define OUTLIER_TRANSLATION_LB 5
 #define OUTLIER_TRANSLATION_UB 10
 
@@ -18,28 +18,30 @@ inline double getAngularError(Eigen::Matrix3d R_exp, Eigen::Matrix3d R_est) {
   return std::abs(std::acos(fmin(fmax(((R_exp.transpose() * R_est).trace() - 1) / 2, -1.0), 1.0)));
 }
 
-void addNoiseAndOutliers(Eigen::Matrix<double, 3, Eigen::Dynamic>& tgt) {
+void addNoiseAndOutliers(Eigen::Matrix<double, 3, Eigen::Dynamic>& tgt)
+{
   // Add uniform noise
-  Eigen::Matrix<double, 3, Eigen::Dynamic> noise =
-      Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, tgt.cols()) * NOISE_BOUND / 2;
+  Eigen::Matrix<double, 3, Eigen::Dynamic> noise = Eigen::Matrix<double, 3, Eigen::Dynamic>::Random(3, tgt.cols()) * NOISE_BOUND / 2;
   tgt = tgt + noise;
 
   // Add outliers
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> dis2(0, tgt.cols() - 1); // pos of outliers
-  std::uniform_int_distribution<> dis3(OUTLIER_TRANSLATION_LB,
-                                       OUTLIER_TRANSLATION_UB); // random translation
+  std::uniform_int_distribution<> dis3(OUTLIER_TRANSLATION_LB, OUTLIER_TRANSLATION_UB); // random translation
   std::vector<bool> expected_outlier_mask(tgt.cols(), false);
-  for (int i = 0; i < N_OUTLIERS; ++i) {
+  for (int i = 0; i < N_OUTLIERS;) {
     int c_outlier_idx = dis2(gen);
     assert(c_outlier_idx < expected_outlier_mask.size());
+    if (expected_outlier_mask[c_outlier_idx]) continue;
+    i++;
     expected_outlier_mask[c_outlier_idx] = true;
     tgt.col(c_outlier_idx).array() += dis3(gen); // random translation
   }
 }
 
-int main() {
+int main()
+{
   // Load the .ply file
   teaser::PLYReader reader;
   teaser::PointCloud src_cloud;
@@ -82,8 +84,7 @@ int main() {
   params.estimate_scaling = false;
   params.rotation_max_iterations = 100;
   params.rotation_gnc_factor = 1.4;
-  params.rotation_estimation_algorithm =
-      teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
+  params.rotation_estimation_algorithm = teaser::RobustRegistrationSolver::ROTATION_ESTIMATION_ALGORITHM::GNC_TLS;
   params.rotation_cost_threshold = 0.005;
 
   // Solve with TEASER++
@@ -102,8 +103,7 @@ int main() {
   std::cout << T.topLeftCorner(3, 3) << std::endl;
   std::cout << "Estimated rotation: " << std::endl;
   std::cout << solution.rotation << std::endl;
-  std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation)
-            << std::endl;
+  std::cout << "Error (rad): " << getAngularError(T.topLeftCorner(3, 3), solution.rotation) << std::endl;
   std::cout << std::endl;
   std::cout << "Expected translation: " << std::endl;
   std::cout << T.topRightCorner(3, 1) << std::endl;
@@ -113,8 +113,6 @@ int main() {
   std::cout << std::endl;
   std::cout << "Number of correspondences: " << N << std::endl;
   std::cout << "Number of outliers: " << N_OUTLIERS << std::endl;
-  std::cout << "Time taken (s): "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() /
-                   1000000.0
-            << std::endl;
+  std::cout << "Time taken (s): " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0 << std::endl;
+  return 0;
 }
